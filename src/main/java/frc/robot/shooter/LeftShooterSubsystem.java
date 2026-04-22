@@ -4,17 +4,23 @@
 
 package frc.robot.shooter;
 
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.ctre.phoenix6.hardware.TalonFX;
-
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.shooter.LeftShooterIO.LeftShooterIOInputs;
+
 import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.controls.VoltageOut;
 
@@ -26,6 +32,9 @@ public class LeftShooterSubsystem extends SubsystemBase {
     private final VoltageOut sysIdControl = new VoltageOut(0);
     private final SysIdRoutine m_SysIdRoutine;
     private final LeftShooterConfigs configs;
+    private final StatusSignal<AngularVelocity> leftShooterVelocitySignal;
+    private final StatusSignal<Voltage> leftShootervoltageSignal;
+    private final StatusSignal<Current> leftShooterCurrentSignal;
 
     private double lastKP = ShooterConstants.leftKP;
     private double lastKI = ShooterConstants.leftKI;
@@ -65,6 +74,9 @@ public class LeftShooterSubsystem extends SubsystemBase {
     configureMotors();
     SignalLogger.setPath("/home/vuser/logs/");
     
+    leftShooterCurrentSignal = shooterMotorOne.getSupplyCurrent();
+    leftShooterVelocitySignal = shooterMotorOne.getVelocity();
+    leftShootervoltageSignal = shooterMotorOne.getMotorVoltage();
 
     SmartDashboard.putNumber("Left Shooter kP", ShooterConstants.leftKP);
     SmartDashboard.putNumber("Left Shooter kI", ShooterConstants.leftKI);
@@ -156,6 +168,14 @@ public class LeftShooterSubsystem extends SubsystemBase {
     double motorRPS = shooterMotorOne.getVelocity().getValueAsDouble();
     double shooterRPM = motorRPS * 60.0;
     SmartDashboard.putNumber("Shooter Motor RPM", shooterRPM);
+  }
+
+  public void updateInputs(LeftShooterIOInputs inputs) {
+    inputs.motorConnected = BaseStatusSignal.refreshAll(leftShooterVelocitySignal, leftShootervoltageSignal, leftShooterCurrentSignal).isOK();
+    
+    inputs.velocityRPM = leftShooterVelocitySignal.getValueAsDouble() * 60.0;
+    inputs.currentAmps = leftShooterCurrentSignal.getValueAsDouble();
+    inputs.appliedVolts = leftShootervoltageSignal.getValueAsDouble();
   }
 
   @Override
