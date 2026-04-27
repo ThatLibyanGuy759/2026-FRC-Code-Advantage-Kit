@@ -36,6 +36,7 @@ import frc.robot.hopper.HopperCommand;
 import frc.robot.hopper.HopperConstants;
 import frc.robot.hopper.HopperExtendCommandGroup;
 import frc.robot.hopper.HopperFeedShootCommand;
+import frc.robot.hopper.HopperIOKraken;
 import frc.robot.hopper.HopperRetractCommandGroup;
 import frc.robot.hopper.HopperSubsystem;
 import frc.robot.hopper.HopperToggleCommand;
@@ -66,7 +67,7 @@ public class RobotContainer {
     private final KickerSubsystem m_kickerSubsystem = new KickerSubsystem();
     private final RollerSubsystem m_rollerSubsystem = new RollerSubsystem();
     private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
-    private final HopperSubsystem m_hopperSubsystem = new HopperSubsystem();
+    private final HopperSubsystem m_hopperSubsystem = new HopperSubsystem(new HopperIOKraken());
     private final ElevatorSubsystem m_elevatorSubsystem = new ElevatorSubsystem();
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
