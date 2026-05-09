@@ -37,6 +37,7 @@ import frc.robot.hopper.HopperConstants;
 import frc.robot.hopper.HopperExtendCommandGroup;
 import frc.robot.hopper.HopperFeedShootCommand;
 import frc.robot.hopper.HopperIOKraken;
+import frc.robot.hopper.HopperIOSim;
 import frc.robot.hopper.HopperRetractCommandGroup;
 import frc.robot.hopper.HopperSubsystem;
 import frc.robot.hopper.HopperToggleCommand;
@@ -67,7 +68,7 @@ public class RobotContainer {
     private final KickerSubsystem m_kickerSubsystem = new KickerSubsystem();
     private final RollerSubsystem m_rollerSubsystem = new RollerSubsystem();
     private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
-    private final HopperSubsystem m_hopperSubsystem = new HopperSubsystem(new HopperIOKraken());
+    private final HopperSubsystem m_hopperSubsystem = new HopperSubsystem( Robot.isSimulation() ? new HopperIOSim() : new HopperIOKraken());
     private final ElevatorSubsystem m_elevatorSubsystem = new ElevatorSubsystem();
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
@@ -156,8 +157,8 @@ public class RobotContainer {
         joystick.x().whileTrue(new OutakeCommand(m_intakeSubsystem, m_rollerSubsystem, 12));
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
         joystick.y().onTrue(new HopperExtendCommandGroup(m_hopperSubsystem));
-        // joystick.b().onTrue(new HopperRetractCommandGroup(m_hopperSubsystem));
-        joystick.b().onTrue(new ElevatorCommand(m_elevatorSubsystem, ElevatorConstants.fullyExtended));
+        joystick.b().onTrue(new HopperRetractCommandGroup(m_hopperSubsystem));
+        // joystick.b().onTrue(new ElevatorCommand(m_elevatorSubsystem, ElevatorConstants.fullyExtended));
 
         // joystick.a().onTrue(new HopperCommand(m_hopperSubsystem, HopperConstants.fullyExtended));
         // joystick.y().onTrue(new HopperCommand(m_hopperSubsystem, HopperConstants.fullyRetracted));
