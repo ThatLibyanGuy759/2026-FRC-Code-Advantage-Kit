@@ -13,6 +13,12 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import static edu.wpi.first.units.Units.*;
@@ -26,6 +32,9 @@ public class RightShooterSubsystem extends SubsystemBase {
     private final VoltageOut sysIdControl = new VoltageOut(0);
     private final SysIdRoutine m_SysIdRoutine;
     private final RightShooterConfigs configs;
+    private final TalonFXSimState motorOneSimState;
+    private final TalonFXSimState motorTwoSimState;
+    private final FlywheelSim flywheelSim;
 
     private double lastKP = ShooterConstants.rightKP;
     private double lastKI = ShooterConstants.rightKI;
@@ -39,7 +48,11 @@ public class RightShooterSubsystem extends SubsystemBase {
     shooterMotorThree = new TalonFX(ShooterConstants.rightShooterMotorOneID);
     shooterMotorFour = new TalonFX(ShooterConstants.rightShooterMotorTwoID);
     configs = new RightShooterConfigs();
-      m_SysIdRoutine = new SysIdRoutine(
+    motorOneSimState = shooterMotorThree.getSimState();
+    motorTwoSimState = shooterMotorFour.getSimState();
+    flywheelSim = new FlywheelSim(
+    LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60Foc(1), 0.003, 1.0), DCMotor.getKrakenX60Foc(1));
+    m_SysIdRoutine = new SysIdRoutine(
       new SysIdRoutine.Config(null,
       Volts.of(4),
       null, 
@@ -164,7 +177,7 @@ public class RightShooterSubsystem extends SubsystemBase {
     double newKD = SmartDashboard.getNumber("Right Shooter kD", ShooterConstants.rightKD);
     double newKS = SmartDashboard.getNumber("Right Shooter kS", ShooterConstants.rightKS);
     double newKV = SmartDashboard.getNumber("Right Shooter kV", ShooterConstants.rightKV);
-
+    printRightRPM();
     if (newKP != lastKP || newKI != lastKI || newKD != lastKD || newKS != lastKS || newKV != lastKV){
       ShooterConstants.rightKP = newKP;
       ShooterConstants.rightKI = newKI;
@@ -184,5 +197,19 @@ public class RightShooterSubsystem extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     // This method will be called once per scheduler run during simulation
+    motorOneSimState.setSupplyVoltage(RoboRioSim.getVInVoltage());
+    motorTwoSimState.setSupplyVoltage(RoboRioSim.getVInVoltage());
+
+    double motorVoltage = motorOneSimState.getMotorVoltage();
+    flywheelSim.setInputVoltage(motorVoltage);
+    flywheelSim.update(0.020);
+
+    double simRPS = flywheelSim.getAngularVelocityRPM() / 60.0;
+    motorOneSimState.setRotorVelocity(simRPS);
+    motorOneSimState.addRotorPosition(simRPS * 0.020);
+    motorTwoSimState.setRotorVelocity(simRPS);
+    motorTwoSimState.addRotorPosition(simRPS * 0.020);
+
+    RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(flywheelSim.getCurrentDrawAmps()));
   }
 }

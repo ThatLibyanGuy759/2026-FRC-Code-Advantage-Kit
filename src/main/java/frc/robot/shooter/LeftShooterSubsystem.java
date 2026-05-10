@@ -17,6 +17,12 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.shooter.LeftShooterIO.LeftShooterIOInputs;
@@ -35,6 +41,9 @@ public class LeftShooterSubsystem extends SubsystemBase {
     private final StatusSignal<AngularVelocity> leftShooterVelocitySignal;
     private final StatusSignal<Voltage> leftShootervoltageSignal;
     private final StatusSignal<Current> leftShooterCurrentSignal;
+    private final TalonFXSimState motorOneSimState;
+    private final TalonFXSimState motorTwoSimState;
+    private final FlywheelSim flywheelSim;
 
     private double lastKP = ShooterConstants.leftKP;
     private double lastKI = ShooterConstants.leftKI;
@@ -47,6 +56,11 @@ public class LeftShooterSubsystem extends SubsystemBase {
 
     shooterMotorOne = new TalonFX(ShooterConstants.leftShooterMotorOneID);
     shooterMotorTwo = new TalonFX(ShooterConstants.leftShooterMotorTwoID);
+    motorOneSimState = shooterMotorOne.getSimState();
+    motorTwoSimState = shooterMotorTwo.getSimState();
+    flywheelSim = new FlywheelSim(
+    LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60Foc(1), 0.003, 1.0), DCMotor.getKrakenX60Foc(1));
+
     configs = new LeftShooterConfigs();
       m_SysIdRoutine = new SysIdRoutine(
       new SysIdRoutine.Config(null,
@@ -126,14 +140,14 @@ public class LeftShooterSubsystem extends SubsystemBase {
   private final VelocityTorqueCurrentFOC torqueFocRequest = new VelocityTorqueCurrentFOC(0).withSlot(0);  
 
   public void runVelocityTorqueFOC(double rps) {
-      double motorRPS = rps; 
-      double actualRPS = shooterMotorOne.getVelocity().refresh().getValueAsDouble();
+    double motorRPS = rps; 
+    double actualRPS = shooterMotorOne.getVelocity().refresh().getValueAsDouble();
 
     shooterMotorOne.setControl(torqueFocRequest.withVelocity(rps));
     shooterMotorTwo.setControl(torqueFocRequest.withVelocity(rps));
 
-      SmartDashboard.putNumber("LEFT Motor Target RPS", motorRPS);
-      SmartDashboard.putNumber("LEFT Motor Actual RPS", actualRPS);
+    SmartDashboard.putNumber("LEFT Motor Target RPS", motorRPS);
+    SmartDashboard.putNumber("LEFT Motor Actual RPS", actualRPS);
   }
 
 
@@ -205,5 +219,19 @@ public class LeftShooterSubsystem extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     // This method will be called once per scheduler run during simulation
+    motorOneSimState.setSupplyVoltage(RoboRioSim.getVInVoltage());
+    motorTwoSimState.setSupplyVoltage(RoboRioSim.getVInVoltage());
+
+    double motorVoltage = motorOneSimState.getMotorVoltage();
+    flywheelSim.setInputVoltage(motorVoltage);
+    flywheelSim.update(0.020);
+
+    double simRPS = flywheelSim.getAngularVelocityRPM() / 60.0;
+    motorOneSimState.setRotorVelocity(simRPS);
+    motorOneSimState.addRotorPosition(simRPS * 0.020);
+    motorTwoSimState.setRotorVelocity(simRPS);
+    motorTwoSimState.addRotorPosition(simRPS * 0.020);
+
+    RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(flywheelSim.getCurrentDrawAmps()));
   }
 }
