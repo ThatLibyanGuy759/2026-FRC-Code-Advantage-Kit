@@ -54,10 +54,12 @@ public class HopperSubsystem extends SubsystemBase {
   }
 
   public void runHopperFront(double speed){
+    hopperMotor.setControl(voltageOut.withOutput(speed));
     io.runVoltage(speed);
   }
 
   public void runHopperBack(double speed){
+    hopperMotor.setControl(voltageOut.withOutput(-speed));
     io.runVoltage(-speed);
   }
 
@@ -66,6 +68,7 @@ public class HopperSubsystem extends SubsystemBase {
   }
 
   public void goToPosition(double meters) {
+    goToPosition(meters, HopperConstants.expoKV);
     io.goToPosition(meters, HopperConstants.expoKV);
   }
 
@@ -81,10 +84,12 @@ public class HopperSubsystem extends SubsystemBase {
   }
 
   public void zeroHopper() {
+    hopperMotor.setPosition(0.0);
     io.zeroPosition();
   }
 
   public void applyIdleConfigs() {
+    hopperMotor.getConfigurator().apply(configs.idleHopperMotorConfig());
     io.applyIdleConfigs();
   }
 
