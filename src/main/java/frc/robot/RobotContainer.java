@@ -32,6 +32,8 @@ import frc.robot.drive.TunerConstants;
 import frc.robot.elevator.ElevatorCommand;
 import frc.robot.elevator.ElevatorConstants;
 import frc.robot.elevator.ElevatorSubsystem;
+import frc.robot.elevator.ElevatorIOKraken;
+import frc.robot.elevator.ElevatorIOSim;
 import frc.robot.hopper.HopperCommand;
 import frc.robot.hopper.HopperConstants;
 import frc.robot.hopper.HopperExtendCommandGroup;
@@ -69,7 +71,7 @@ public class RobotContainer {
     private final RollerSubsystem m_rollerSubsystem = new RollerSubsystem();
     private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
     private final HopperSubsystem m_hopperSubsystem = new HopperSubsystem( Robot.isSimulation() ? new HopperIOSim() : new HopperIOKraken());
-    private final ElevatorSubsystem m_elevatorSubsystem = new ElevatorSubsystem();
+    private final ElevatorSubsystem m_elevatorSubsystem = new ElevatorSubsystem( Robot.isSimulation() ? new ElevatorIOSim() : new ElevatorIOKraken());
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
     /* Setting up bindings for necessary control of the swerve drive platform */
@@ -157,8 +159,8 @@ public class RobotContainer {
         joystick.x().whileTrue(new OutakeCommand(m_intakeSubsystem, m_rollerSubsystem, 12));
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
         joystick.y().onTrue(new HopperExtendCommandGroup(m_hopperSubsystem));
-        joystick.b().onTrue(new HopperRetractCommandGroup(m_hopperSubsystem));
-        // joystick.b().onTrue(new ElevatorCommand(m_elevatorSubsystem, ElevatorConstants.fullyExtended));
+        // joystick.b().onTrue(new HopperRetractCommandGroup(m_hopperSubsystem));
+        joystick.b().onTrue(new ElevatorCommand(m_elevatorSubsystem, ElevatorConstants.fullyExtended));
 
         // joystick.a().onTrue(new HopperCommand(m_hopperSubsystem, HopperConstants.fullyExtended));
         // joystick.y().onTrue(new HopperCommand(m_hopperSubsystem, HopperConstants.fullyRetracted));
