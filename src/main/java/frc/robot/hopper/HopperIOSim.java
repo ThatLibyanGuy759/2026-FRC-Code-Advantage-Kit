@@ -14,7 +14,7 @@ public class HopperIOSim implements HopperIO {
     private final TalonFX motor;
     private final TalonFXSimState simState;
     private final ElevatorSim hopperSim;
-
+    private final HopperConfigs configs;
 
     private final ProfiledPIDController controller = new ProfiledPIDController(50.0, 0.0, 0.0, new TrapezoidProfile.Constraints(12.0 / HopperConstants.expoKV,12.0 / HopperConstants.expoKA));
     private double appliedVolts = 0.0;
@@ -23,6 +23,12 @@ public class HopperIOSim implements HopperIO {
     public HopperIOSim() {
         motor = new TalonFX(HopperConstants.hopperMotorID);
         simState = motor.getSimState();
+        configs = new HopperConfigs();
+
+        for (int i = 0; i < 5; i++) {
+            var status = motor.getConfigurator().apply(configs.hopperMotorConfig());
+            if (status.isOK()) break;
+        }
 
         hopperSim = new ElevatorSim(
             DCMotor.getKrakenX60(1),

@@ -69,6 +69,7 @@ public class HopperIOKraken implements HopperIO {
 
     @Override
     public void runVoltage(double volts) {
+        hopperMotor.getConfigurator().apply(configs.idleHopperMotorConfig());
         hopperMotor.setControl(voltageOut.withOutput(volts));
     }
 

@@ -2,7 +2,6 @@ package frc.robot.hopper;
 
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
@@ -21,7 +20,6 @@ public class HopperSubsystem extends SubsystemBase {
   
   private final TalonFX hopperMotor;
   private final HopperConfigs configs;
-  private final VoltageOut voltageOut = new VoltageOut(0); 
   private final MotionMagicExpoVoltage setpointRequest = new MotionMagicExpoVoltage(0);
 
   private final HopperIO io;
@@ -54,12 +52,10 @@ public class HopperSubsystem extends SubsystemBase {
   }
 
   public void runHopperFront(double speed){
-    hopperMotor.setControl(voltageOut.withOutput(speed));
     io.runVoltage(speed);
   }
 
   public void runHopperBack(double speed){
-    hopperMotor.setControl(voltageOut.withOutput(-speed));
     io.runVoltage(-speed);
   }
 
@@ -69,7 +65,6 @@ public class HopperSubsystem extends SubsystemBase {
 
   public void goToPosition(double meters) {
     goToPosition(meters, HopperConstants.expoKV);
-    io.goToPosition(meters, HopperConstants.expoKV);
   }
 
   public void goToPosition(double meters, double expoKV) {
@@ -77,7 +72,6 @@ public class HopperSubsystem extends SubsystemBase {
     mmConfigs.MotionMagicExpo_kV = expoKV;
     mmConfigs.MotionMagicExpo_kA = HopperConstants.expoKA;
     hopperMotor.getConfigurator().apply(mmConfigs);
-    hopperMotor.getConfigurator().apply(configs.hopperMotorConfig());
     double targetRotations = meters / HopperConstants.metersPerRotation;
     hopperMotor.setControl(setpointRequest.withPosition(targetRotations));
     io.goToPosition(meters, expoKV);

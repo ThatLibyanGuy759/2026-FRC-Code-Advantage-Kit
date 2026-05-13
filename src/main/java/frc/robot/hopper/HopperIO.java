@@ -14,20 +14,10 @@ public interface HopperIO {
         public boolean motorConnected = true;
     }
  
-    public default void updateInputs(HopperIOInputs inputs) {
-        
-    }
-    public default void goToPosition(double meters, double expoKV) {
-
-    }
-    public default void runVoltage(double volts) {
-
-    }
-    public default void zeroPosition() {
-
-    }
-    public default void applyIdleConfigs() {
-        
-    }
+    public void updateInputs(HopperIOInputs inputs);
+    public void goToPosition(double meters, double expoKV);
+    public void runVoltage(double volts);
+    public void zeroPosition();
+    public void applyIdleConfigs();
 }
  
